@@ -1,0 +1,27 @@
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
+
+export async function GET() {
+  try {
+    const db = supabase();
+    const { data: categories, error: ce } = await db
+      .from("categories").select("*").order("created_at");
+    if (ce) throw ce;
+
+    const { data: nominees, error: ne } = await db
+      .from("nominees").select("*").eq("is_active", true).order("name");
+    if (ne) throw ne;
+
+    const { data: votes, error: ve } = await db
+      .from("votes").select("nominee_id");
+    if (ve) throw ve;
+
+    const counts: Record<string, number> = {};
+    for (const v of votes || []) counts[v.nominee_id] = (counts[v.nominee_id] || 0) + 1;
+
+    const results = (nominees || []).map(n => ({...n, votes: counts[n.id] || 0}));
+    return NextResponse.json({ categories, nominees, results });
+  } catch (e: any) {
+    return NextResponse.json({error: e.message}, {status:500});
+  }
+}
