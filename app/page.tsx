@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 
 type Category = { id: string; name: string; description: string | null };
-type Nominee = { id: string; name: string; bio: string | null; category_id: string; };
+type Nominee = {
+  id: string;
+  name: string;
+  bio: string | null;
+  category_id: string;
+  photo_url: string | null;
+};
 type Result = Nominee & { votes: number };
 
 export default function Home() {
@@ -67,13 +73,50 @@ export default function Home() {
               <h3>{category.name}</h3>
               <p>{category.description || "Choose your preferred nominee."}</p>
               <div>
-                {nominees.filter(n => n.category_id === category.id).map(n => (
-                  <div key={n.id} style={{marginBottom:12}}>
-                    <strong>{n.name}</strong>
-                    {n.bio && <p style={{margin:"4px 0 8px"}}>{n.bio}</p>}
-                    <button className="voteBtn" onClick={() => setSelected(n)}>VOTE</button>
-                  </div>
-                ))}
+                {nominees
+  .filter(n => n.category_id === category.id)
+  .map(n => (
+    <div
+      key={n.id}
+      style={{
+        marginBottom: 20,
+        padding: 15,
+        border: "1px solid #eee",
+        borderRadius: 12
+      }}
+    >
+      {n.photo_url && (
+        <img
+          src={n.photo_url}
+          alt={n.name}
+          style={{
+            width: "100%",
+            maxWidth: 220,
+            height: 220,
+            objectFit: "cover",
+            borderRadius: 12,
+            display: "block",
+            marginBottom: 12
+          }}
+        />
+      )}
+
+      <strong>{n.name}</strong>
+
+      {n.bio && (
+        <p style={{ margin: "4px 0 8px" }}>
+          {n.bio}
+        </p>
+      )}
+
+      <button
+        className="voteBtn"
+        onClick={() => setSelected(n)}
+      >
+        VOTE
+      </button>
+    </div>
+  ))}
               </div>
             </section>
           ))}
