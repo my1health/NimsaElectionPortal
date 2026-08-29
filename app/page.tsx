@@ -97,7 +97,7 @@ export default function Home() {
     setMessage("");
 
     try {
-      const r = await fetch("/api/vote", {
+      const r = await fetch("/api/payment/initialize", {
         method: "POST",
 
         headers: {
