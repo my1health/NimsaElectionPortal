@@ -33,6 +33,22 @@ type AdminStats = {
   totalAmountKobo: number;
   totalAmountNaira: number;
 };
+type AdminResultNominee = {
+  id: string;
+  name: string;
+  bio: string | null;
+  category_id: string;
+  photo_url: string | null;
+  is_active: boolean;
+  votes: number;
+};
+
+type AdminResultCategory = {
+  id: string;
+  name: string;
+  nominees: AdminResultNominee[];
+  totalVotes: number;
+};
 
 export default function AdminPage() {
 
