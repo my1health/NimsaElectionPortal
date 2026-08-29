@@ -22,6 +22,17 @@ type Nominee = {
   is_active: boolean;
   photo_url: string | null;
 };
+type AdminStats = {
+  categories: number;
+  nominees: number;
+  activeNominees: number;
+  votes: number;
+  successfulPayments: number;
+  pendingPayments: number;
+  failedPayments: number;
+  totalAmountKobo: number;
+  totalAmountNaira: number;
+};
 
 export default function AdminPage() {
 
