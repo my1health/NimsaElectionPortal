@@ -16,9 +16,7 @@ type Nominee = {
   photo_url: string | null;
 };
 
-type Result = Nominee & {
-  votes: number;
-};
+
 
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
