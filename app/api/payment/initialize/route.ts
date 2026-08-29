@@ -184,19 +184,19 @@ export async function POST(request: Request) {
         });
 
     if (paymentError) {
-      console.error(
-        "Payment database error:",
-        paymentError
-      );
+  console.error(
+    "Payment database error:",
+    paymentError
+  );
 
-      return NextResponse.json(
-        {
-          error:
-            "Payment was initialized but could not be recorded. Please do not retry immediately. Contact the administrator."
-        },
-        { status: 500 }
-      );
-    }
+  return NextResponse.json(
+    {
+      error: "Payment database error.",
+      details: paymentError
+    },
+    { status: 500 }
+  );
+}
 
     // -----------------------------
     // RETURN PAYMENT INFORMATION
