@@ -21,7 +21,7 @@ type Nominee = {
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [nominees, setNominees] = useState<Nominee[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
+  
 
   const [selected, setSelected] = useState<Nominee | null>(null);
 
