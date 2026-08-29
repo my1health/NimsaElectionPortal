@@ -654,23 +654,31 @@ export default function Home() {
             </label>
 
             <input
-              className="email-input"
-              type="number"
-              min="1"
-              max="1000"
-              value={quantity}
-              onChange={e =>
-                setQuantity(
-                  Math.max(
-                    1,
-                    Math.min(
-                      1000,
-                      Number(e.target.value)
-                    )
-                  )
-                )
-              }
-            />
+  className="email-input"
+  type="number"
+  min="1"
+  max="1000"
+  value={quantity}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    // Allow the user to temporarily clear the input
+    if (value === "") {
+      setQuantity(0);
+      return;
+    }
+
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+      return;
+    }
+
+    setQuantity(
+      Math.min(1000, Math.max(0, number))
+    );
+  }}
+/>
 
 
             <div
