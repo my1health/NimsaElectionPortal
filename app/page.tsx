@@ -674,37 +674,39 @@ const totalAmount =
   onChange={(e) => {
     const value = e.target.value;
 
-    // Allow the field to be temporarily empty
+    // Allow empty field while typing
     if (value === "") {
       setQuantity("");
       return;
     }
 
-    // Allow whole numbers only
+    // Only allow digits
     if (!/^\d+$/.test(value)) {
       return;
     }
 
-    // Remove leading zeros
-    const cleaned = value.replace(/^0+/, "");
+    // Convert the typed value to a number
+    const number = Number(value);
 
-    // Temporarily allow 0 while editing
-    if (cleaned === "") {
-      setQuantity("0");
-      return;
-    }
-
-    const number = Number(cleaned);
-
-    // Maximum of 1000 votes
+    // Maximum 1000 votes
     if (number > 1000) {
       setQuantity("1000");
       return;
     }
 
-    setQuantity(cleaned);
+    setQuantity(value);
+  }}
+  onBlur={() => {
+    // If user leaves the field empty or enters 0,
+    // restore the minimum of 1 vote.
+    const number = Number(quantity);
+
+    if (!Number.isInteger(number) || number < 1) {
+      setQuantity("1");
+    }
   }}
 />
+
 
 
             <div
