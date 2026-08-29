@@ -177,6 +177,46 @@ export default function AdminPage() {
     setStatsLoading(false);
   }
 }
+  async function loadResults() {
+  try {
+    setResultsLoading(true);
+
+    const response = await fetch(
+      "/api/admin/results",
+      {
+        cache: "no-store",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Unable to load voting results."
+      );
+    }
+
+    setAdminResults(
+      data.categories || []
+    );
+
+  } catch (error: any) {
+
+    console.error(
+      "Admin results error:",
+      error
+    );
+
+    setMessage(
+      error?.message ||
+        "Unable to load voting results."
+    );
+
+  } finally {
+    setResultsLoading(false);
+  }
+}
   async function loadData() {
 
     const db = supabase();
