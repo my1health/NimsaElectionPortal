@@ -777,6 +777,299 @@ export default function AdminPage() {
         )}
 
 
+        {/* =========================
+    ADMIN VOTING RESULTS
+========================= */}
+
+<section
+  className="card"
+  style={{
+    marginBottom: 30,
+  }}
+>
+
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 15,
+      flexWrap: "wrap",
+    }}
+  >
+
+    <div>
+
+      <p className="muted">
+        ADMIN ONLY
+      </p>
+
+      <h2 style={{ margin: 0 }}>
+        Voting Results
+      </h2>
+
+      <p className="muted">
+        Live verified votes by category.
+      </p>
+
+    </div>
+
+
+    <button
+      className="smallBtn"
+      onClick={loadResults}
+      disabled={resultsLoading}
+    >
+      {resultsLoading
+        ? "Refreshing..."
+        : "Refresh Results"}
+    </button>
+
+  </div>
+
+
+  {resultsLoading ? (
+
+    <div
+      style={{
+        marginTop: 25,
+      }}
+    >
+      Loading voting results...
+    </div>
+
+  ) : (
+
+    <div
+      style={{
+        marginTop: 25,
+        display: "grid",
+        gap: 25,
+      }}
+    >
+
+      {adminResults.map(
+        (category) => (
+
+          <div
+            key={category.id}
+            style={{
+              border:
+                "1px solid #dedbd2",
+              padding: 20,
+              background:
+                "#faf9f6",
+            }}
+          >
+
+            {/* CATEGORY HEADER */}
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "space-between",
+                alignItems: "center",
+                gap: 15,
+                flexWrap: "wrap",
+                marginBottom: 15,
+              }}
+            >
+
+              <h3
+                style={{
+                  margin: 0,
+                }}
+              >
+                {category.name}
+              </h3>
+
+              <strong>
+                {category.totalVotes}{" "}
+                {category.totalVotes === 1
+                  ? "vote"
+                  : "votes"}
+              </strong>
+
+            </div>
+
+
+            {/* NOMINEES */}
+
+            {category.nominees.length ===
+            0 ? (
+
+              <p className="muted">
+                No nominees in this
+                category.
+              </p>
+
+            ) : (
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 10,
+                }}
+              >
+
+                {category.nominees.map(
+                  (
+                    nominee,
+                    index
+                  ) => (
+
+                    <div
+                      key={
+                        nominee.id
+                      }
+                      style={{
+                        display:
+                          "flex",
+                        alignItems:
+                          "center",
+                        gap: 12,
+                        padding: 12,
+                        background:
+                          "white",
+                        border:
+                          "1px solid #eee",
+                      }}
+                    >
+
+                      {/* RANK */}
+
+                      <strong
+                        style={{
+                          width: 35,
+                          fontSize: 18,
+                        }}
+                      >
+                        #{index + 1}
+                      </strong>
+
+
+                      {/* PHOTO */}
+
+                      {nominee.photo_url ? (
+
+                        <img
+                          src={
+                            nominee.photo_url
+                          }
+                          alt={
+                            nominee.name
+                          }
+                          style={{
+                            width: 50,
+                            height: 50,
+                            objectFit:
+                              "cover",
+                            borderRadius:
+                              "50%",
+                          }}
+                        />
+
+                      ) : (
+
+                        <div
+                          style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius:
+                              "50%",
+                            background:
+                              "#eee",
+                            display:
+                              "flex",
+                            alignItems:
+                              "center",
+                            justifyContent:
+                              "center",
+                            fontWeight:
+                              700,
+                          }}
+                        >
+                          {nominee.name
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+
+                      )}
+
+
+                      {/* NAME */}
+
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+
+                        <strong>
+                          {
+                            nominee.name
+                          }
+                        </strong>
+
+                        <div
+                          className="muted"
+                        >
+                          {nominee.is_active
+                            ? "Active nominee"
+                            : "Hidden nominee"}
+                        </div>
+
+                      </div>
+
+
+                      {/* VOTES */}
+
+                      <div
+                        style={{
+                          textAlign:
+                            "right",
+                        }}
+                      >
+
+                        <strong
+                          style={{
+                            fontSize: 20,
+                          }}
+                        >
+                          {
+                            nominee.votes
+                          }
+                        </strong>
+
+                        <div
+                          className="muted"
+                        >
+                          VOTES
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+        )
+      )}
+
+    </div>
+
+  )}
+
+</section>
         <div className="adminGrid">
 
 
