@@ -29,7 +29,7 @@ export default function Home() {
 
   const [email, setEmail] = useState("");
 
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState("1");
 
   const [message, setMessage] = useState("");
 
