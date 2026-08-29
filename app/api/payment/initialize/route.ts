@@ -186,13 +186,13 @@ export async function POST(request: Request) {
     "https://nimsa-election.vercel.app/payment/callback",
 
   metadata: {
-            nominee_id: nominee.id,
-            nominee_name: nominee.name,
-            category_id: nominee.category_id,
-            vote_count: quantity,
-            amount_naira: amountNaira
-          }
-        })
+    nominee_id: nominee.id,
+    nominee_name: nominee.name,
+    category_id: nominee.category_id,
+    vote_count: quantity,
+    amount_naira: amountNaira
+  }
+})
       }
     );
 
