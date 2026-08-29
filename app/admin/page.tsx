@@ -133,6 +133,7 @@ export default function AdminPage() {
     await Promise.all([
   loadData(),
   loadStats(),
+  loadResults(),
 ]);
 
     setLoading(false);
