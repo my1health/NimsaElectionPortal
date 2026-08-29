@@ -116,6 +116,43 @@ const [statsLoading, setStatsLoading] =
 
 
   // Load categories + nominees
+  async function loadStats() {
+  try {
+    setStatsLoading(true);
+
+    const response = await fetch(
+      "/api/admin/stats",
+      {
+        cache: "no-store",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Unable to load dashboard statistics."
+      );
+    }
+
+    setStats(data.statistics);
+
+  } catch (error: any) {
+    console.error(
+      "Admin stats error:",
+      error
+    );
+
+    setMessage(
+      error?.message ||
+        "Unable to load dashboard statistics."
+    );
+
+  } finally {
+    setStatsLoading(false);
+  }
+}
   async function loadData() {
 
     const db = supabase();
