@@ -179,10 +179,13 @@ export async function POST(request: Request) {
         },
 
         body: JSON.stringify({
-          email,
-          amount: amountKobo,
+  email,
+  amount: amountKobo,
 
-          metadata: {
+  callback_url:
+    "https://nimsa-election.vercel.app/payment/callback",
+
+  metadata: {
             nominee_id: nominee.id,
             nominee_name: nominee.name,
             category_id: nominee.category_id,
