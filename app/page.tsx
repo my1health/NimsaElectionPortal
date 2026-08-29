@@ -75,7 +75,7 @@ const totalAmount =
 
     setSelected(null);
     setEmail("");
-    setQuantity(1);
+    setQuantity("1");
     setMessage("");
   }
 
