@@ -94,10 +94,16 @@ const totalAmount =
       return;
     }
 
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      setMessage("Please select a valid number of votes.");
-      return;
-    }
+    const voteQuantity = Number(quantity);
+
+    if (
+  !Number.isInteger(voteQuantity) ||
+  voteQuantity < 1 ||
+  voteQuantity > 1000
+) {
+  setMessage("Please enter between 1 and 1000 whole votes.");
+  return;
+}
 
     setBusy(true);
     setMessage("");
