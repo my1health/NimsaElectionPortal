@@ -105,10 +105,10 @@ export default function Home() {
         },
 
         body: JSON.stringify({
-          nomineeId: selected.id,
-          email: email.trim().toLowerCase(),
-          quantity,
-        }),
+  nomineeId: selected.id,
+  email: email.trim().toLowerCase(),
+  amount: totalAmount,
+}),
       });
 
       const data = await r.json();
