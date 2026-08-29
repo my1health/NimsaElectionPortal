@@ -68,7 +68,12 @@ export default function AdminPage() {
   const [stats, setStats] =
   useState<AdminStats | null>(null);
 
-const [statsLoading, setStatsLoading] =
+  const [statsLoading, setStatsLoading] =
+  useState(true);
+  const [adminResults, setAdminResults] =
+  useState<AdminResultCategory[]>([]);
+
+  const [resultsLoading, setResultsLoading] =
   useState(true);
 
   const [name, setName] =
