@@ -1022,411 +1022,487 @@ export default function AdminPage() {
         {/* ============================
             VOTING RESULTS
         ============================ */}
+        {/* ============================
+    LEADERBOARD MENU
+============================ */}
 
-        <section
+<section
+  style={{
+    background: "#fff",
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: showLeaderboard ? 15 : 30,
+    boxShadow:
+      "0 6px 25px rgba(0,0,0,0.05)",
+    border:
+      "1px solid #e8ebe9",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 15,
+      flexWrap: "wrap",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 13,
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: "#edf3ef",
+          color: "#063c2c",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 20,
+          fontWeight: 900,
+        }}
+      >
+        ★
+      </div>
+
+      <div>
+        <div
           style={{
-            background:
-              "#fff",
-            borderRadius: 18,
-            padding: 24,
-            marginBottom: 30,
-            boxShadow:
-              "0 6px 25px rgba(0,0,0,0.05)",
-            border:
-              "1px solid #e8ebe9",
+            color: "#a17e25",
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "1.4px",
+            marginBottom: 3,
           }}
         >
+          ADMIN ONLY
+        </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent:
-                "space-between",
-              alignItems:
-                "center",
-              gap: 15,
-              flexWrap:
-                "wrap",
-              marginBottom: 25,
-            }}
-          >
+        <h2
+          style={{
+            margin: 0,
+            color: "#063c2c",
+            fontSize: 20,
+          }}
+        >
+          Leaderboard
+        </h2>
 
-            <div>
+        <p
+          style={{
+            margin: "3px 0 0",
+            color: "#76817d",
+            fontSize: 13,
+          }}
+        >
+          View live voting results.
+        </p>
+      </div>
+    </div>
+
+    <button
+      onClick={() =>
+        setShowLeaderboard(
+          !showLeaderboard
+        )
+      }
+      style={{
+        border: "none",
+        background: "#063c2c",
+        color: "#fff",
+        padding: "11px 17px",
+        borderRadius: 9,
+        fontWeight: 800,
+        cursor: "pointer",
+        minWidth: 145,
+      }}
+    >
+      {showLeaderboard
+        ? "▲ Hide Leaderboard"
+        : "▼ View Leaderboard"}
+    </button>
+  </div>
+</section>
+
+
+{/* ============================
+    LEADERBOARD CONTENT
+============================ */}
+
+{showLeaderboard && (
+  <section
+    style={{
+      background: "#fff",
+      borderRadius: 18,
+      padding: 24,
+      marginBottom: 30,
+      boxShadow:
+        "0 6px 25px rgba(0,0,0,0.05)",
+      border:
+        "1px solid #e8ebe9",
+    }}
+  >
+
+    {/* HEADER */}
+
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 15,
+        flexWrap: "wrap",
+        marginBottom: 25,
+      }}
+    >
+      <div>
+        <div
+          style={{
+            color: "#a17e25",
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: "1.4px",
+            marginBottom: 5,
+          }}
+        >
+          LIVE MONITORING
+        </div>
+
+        <h2
+          style={{
+            margin: "0 0 5px",
+            color: "#063c2c",
+          }}
+        >
+          Voting Results
+        </h2>
+
+        <p
+          style={{
+            margin: 0,
+            color: "#76817d",
+            fontSize: 14,
+          }}
+        >
+          Verified votes by category.
+        </p>
+      </div>
+
+      <button
+        onClick={() =>
+          Promise.all([
+            loadStats(),
+            loadResults(),
+          ])
+        }
+        disabled={resultsLoading}
+        style={{
+          background: "#063c2c",
+          color: "#fff",
+          border: "none",
+          padding: "10px 16px",
+          borderRadius: 9,
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        {resultsLoading
+          ? "Refreshing..."
+          : "↻ Refresh"}
+      </button>
+    </div>
+
+
+    {/* RESULTS */}
+
+    {resultsLoading ? (
+
+      <div
+        style={{
+          padding: 35,
+          textAlign: "center",
+          color: "#777",
+        }}
+      >
+        Loading voting results...
+      </div>
+
+    ) : (
+
+      <div
+        style={{
+          display: "grid",
+          gap: 16,
+        }}
+      >
+
+        {adminResults.map(
+          (category) => (
+
+            <div
+              key={category.id}
+              style={{
+                border:
+                  "1px solid #e6e9e7",
+                borderRadius: 14,
+                overflow: "hidden",
+              }}
+            >
+
+              {/* CATEGORY HEADER */}
 
               <div
                 style={{
-                  color:
-                    "#a17e25",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing:
-                    "1.4px",
-                  marginBottom: 5,
+                  padding:
+                    "15px 18px",
+                  background:
+                    "#f7f9f8",
+                  display: "flex",
+                  justifyContent:
+                    "space-between",
+                  alignItems:
+                    "center",
+                  gap: 15,
                 }}
               >
-                LIVE MONITORING
+
+                <strong
+                  style={{
+                    color: "#063c2c",
+                  }}
+                >
+                  {category.name}
+                </strong>
+
+                <span
+                  style={{
+                    background:
+                      "#063c2c",
+                    color: "#fff",
+                    borderRadius: 20,
+                    padding:
+                      "5px 11px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  {category.totalVotes}{" "}
+                  {category.totalVotes ===
+                  1
+                    ? "vote"
+                    : "votes"}
+                </span>
+
               </div>
 
-              <h2
-                style={{
-                  margin:
-                    "0 0 5px",
-                  color:
-                    "#063c2c",
-                }}
-              >
-                Voting Results
-              </h2>
 
-              <p
-                style={{
-                  margin: 0,
-                  color:
-                    "#76817d",
-                  fontSize: 14,
-                }}
-              >
-                Verified votes by category.
-              </p>
+              {/* NOMINEES */}
 
-            </div>
+              {category.nominees.length ===
+              0 ? (
 
-            <button
-              onClick={() =>
-                Promise.all([
-                  loadStats(),
-                  loadResults(),
-                ])
-              }
-              disabled={
-                resultsLoading
-              }
-              style={{
-                background:
-                  "#063c2c",
-                color: "#fff",
-                border: "none",
-                padding:
-                  "10px 16px",
-                borderRadius: 9,
-                fontWeight: 700,
-                cursor:
-                  "pointer",
-              }}
-            >
-              {resultsLoading
-                ? "Refreshing..."
-                : "↻ Refresh"}
-            </button>
+                <div
+                  style={{
+                    padding: 20,
+                    color: "#8a9390",
+                    fontSize: 14,
+                  }}
+                >
+                  No nominees in this
+                  category.
+                </div>
 
-          </div>
+              ) : (
 
+                <div
+                  style={{
+                    display: "grid",
+                  }}
+                >
 
-          {resultsLoading ? (
-
-            <div
-              style={{
-                padding: 35,
-                textAlign:
-                  "center",
-                color:
-                  "#777",
-              }}
-            >
-              Loading voting results...
-            </div>
-
-          ) : (
-
-            <div
-              style={{
-                display:
-                  "grid",
-                gap: 16,
-              }}
-            >
-
-              {adminResults.map(
-                (category) => (
-
-                  <div
-                    key={
-                      category.id
-                    }
-                    style={{
-                      border:
-                        "1px solid #e6e9e7",
-                      borderRadius:
-                        14,
-                      overflow:
-                        "hidden",
-                    }}
-                  >
-
-                    {/* CATEGORY HEADER */}
-
-                    <div
-                      style={{
-                        padding:
-                          "15px 18px",
-                        background:
-                          "#f7f9f8",
-                        display:
-                          "flex",
-                        justifyContent:
-                          "space-between",
-                        alignItems:
-                          "center",
-                        gap: 15,
-                      }}
-                    >
-
-                      <strong
-                        style={{
-                          color:
-                            "#063c2c",
-                        }}
-                      >
-                        {category.name}
-                      </strong>
-
-                      <span
-                        style={{
-                          background:
-                            "#063c2c",
-                          color:
-                            "#fff",
-                          borderRadius:
-                            20,
-                          padding:
-                            "5px 11px",
-                          fontSize:
-                            12,
-                          fontWeight:
-                            700,
-                        }}
-                      >
-                        {
-                          category.totalVotes
-                        }{" "}
-                        {category.totalVotes ===
-                        1
-                          ? "vote"
-                          : "votes"}
-                      </span>
-
-                    </div>
-
-
-                    {/* NOMINEES */}
-
-                    {category.nominees.length ===
-                    0 ? (
+                  {category.nominees.map(
+                    (
+                      nominee,
+                      index
+                    ) => (
 
                       <div
-                        style={{
-                          padding:
-                            "20px",
-                          color:
-                            "#8a9390",
-                          fontSize:
-                            14,
-                        }}
-                      >
-                        No nominees in this
-                        category.
-                      </div>
-
-                    ) : (
-
-                      <div
+                        key={
+                          nominee.id
+                        }
                         style={{
                           display:
-                            "grid",
+                            "flex",
+                          alignItems:
+                            "center",
+                          gap: 13,
+                          padding:
+                            "13px 18px",
+                          borderTop:
+                            "1px solid #eef0ef",
                         }}
                       >
 
-                        {category.nominees.map(
-                          (
-                            nominee,
-                            index
-                          ) => (
+                        {/* RANK */}
 
-                            <div
-                              key={
-                                nominee.id
-                              }
-                              style={{
-                                display:
-                                  "flex",
-                                alignItems:
-                                  "center",
-                                gap: 13,
-                                padding:
-                                  "13px 18px",
-                                borderTop:
-                                  "1px solid #eef0ef",
-                              }}
-                            >
-
-                              {/* RANK */}
-
-                              <strong
-                                style={{
-                                  width: 30,
-                                  color:
-                                    index ===
-                                    0
-                                      ? "#a17e25"
-                                      : "#7b8581",
-                                }}
-                              >
-                                #{index + 1}
-                              </strong>
+                        <strong
+                          style={{
+                            width: 30,
+                            color:
+                              index === 0
+                                ? "#a17e25"
+                                : "#7b8581",
+                          }}
+                        >
+                          #{index + 1}
+                        </strong>
 
 
-                              {/* PHOTO */}
+                        {/* PHOTO */}
 
-                              {nominee.photo_url ? (
+                        {nominee.photo_url ? (
 
-                                <img
-                                  src={
-                                    nominee.photo_url
-                                  }
-                                  alt={
-                                    nominee.name
-                                  }
-                                  style={{
-                                    width: 46,
-                                    height: 46,
-                                    borderRadius:
-                                      "50%",
-                                    objectFit:
-                                      "cover",
-                                  }}
-                                />
+                          <img
+                            src={
+                              nominee.photo_url
+                            }
+                            alt={
+                              nominee.name
+                            }
+                            style={{
+                              width: 46,
+                              height: 46,
+                              borderRadius:
+                                "50%",
+                              objectFit:
+                                "cover",
+                            }}
+                          />
 
-                              ) : (
+                        ) : (
 
-                                <div
-                                  style={{
-                                    width: 46,
-                                    height: 46,
-                                    borderRadius:
-                                      "50%",
-                                    background:
-                                      "#e7ece9",
-                                    display:
-                                      "flex",
-                                    alignItems:
-                                      "center",
-                                    justifyContent:
-                                      "center",
-                                    fontWeight:
-                                      800,
-                                    color:
-                                      "#063c2c",
-                                  }}
-                                >
-                                  {nominee.name
-                                    .charAt(
-                                      0
-                                    )
-                                    .toUpperCase()}
-                                </div>
+                          <div
+                            style={{
+                              width: 46,
+                              height: 46,
+                              borderRadius:
+                                "50%",
+                              background:
+                                "#e7ece9",
+                              display:
+                                "flex",
+                              alignItems:
+                                "center",
+                              justifyContent:
+                                "center",
+                              fontWeight:
+                                800,
+                              color:
+                                "#063c2c",
+                            }}
+                          >
+                            {nominee.name
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
 
-                              )}
-
-
-                              {/* NAME */}
-
-                              <div
-                                style={{
-                                  flex: 1,
-                                  minWidth: 0,
-                                }}
-                              >
-
-                                <strong>
-                                  {
-                                    nominee.name
-                                  }
-                                </strong>
-
-                                <div
-                                  style={{
-                                    fontSize:
-                                      12,
-                                    color:
-                                      "#8a9390",
-                                    marginTop:
-                                      2,
-                                  }}
-                                >
-                                  {nominee.is_active
-                                    ? "Active"
-                                    : "Hidden"}
-                                </div>
-
-                              </div>
-
-
-                              {/* VOTES */}
-
-                              <div
-                                style={{
-                                  textAlign:
-                                    "right",
-                                }}
-                              >
-
-                                <strong
-                                  style={{
-                                    fontSize:
-                                      19,
-                                    color:
-                                      "#063c2c",
-                                  }}
-                                >
-                                  {
-                                    nominee.votes
-                                  }
-                                </strong>
-
-                                <div
-                                  style={{
-                                    fontSize:
-                                      10,
-                                    color:
-                                      "#89918e",
-                                    letterSpacing:
-                                      "1px",
-                                  }}
-                                >
-                                  VOTES
-                                </div>
-
-                              </div>
-
-                            </div>
-
-                          )
                         )}
+
+
+                        {/* NAME */}
+
+                        <div
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+
+                          <strong>
+                            {
+                              nominee.name
+                            }
+                          </strong>
+
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color:
+                                "#8a9390",
+                              marginTop: 2,
+                            }}
+                          >
+                            {nominee.is_active
+                              ? "Active"
+                              : "Hidden"}
+                          </div>
+
+                        </div>
+
+
+                        {/* VOTES */}
+
+                        <div
+                          style={{
+                            textAlign:
+                              "right",
+                          }}
+                        >
+
+                          <strong
+                            style={{
+                              fontSize: 19,
+                              color:
+                                "#063c2c",
+                            }}
+                          >
+                            {
+                              nominee.votes
+                            }
+                          </strong>
+
+                          <div
+                            style={{
+                              fontSize: 10,
+                              color:
+                                "#89918e",
+                              letterSpacing:
+                                "1px",
+                            }}
+                          >
+                            VOTES
+                          </div>
+
+                        </div>
 
                       </div>
 
-                    )}
+                    )
+                  )}
 
-                  </div>
+                </div>
 
-                )
               )}
 
             </div>
 
-          )}
+          )
+        )}
 
-        </section>
+      </div>
+
+    )}
+
+  </section>
+)}
+
+
 
 
         {/* ============================
