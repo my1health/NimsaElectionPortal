@@ -79,6 +79,14 @@ export async function POST(request: Request) {
     // -----------------------------
 
     const db = supabaseAdmin();
+    const { data: roleTest, error: roleError } = await db.rpc(
+  "get_current_role"
+);
+
+console.log("SUPABASE ROLE TEST:", {
+  roleTest,
+  roleError,
+});
 
     // Make sure nominee actually exists
     const { data: nominee, error: nomineeError } =
