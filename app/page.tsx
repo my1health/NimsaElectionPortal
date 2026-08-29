@@ -119,7 +119,7 @@ const totalAmount =
         body: JSON.stringify({
   nomineeId: selected.id,
   email: email.trim().toLowerCase(),
-  quantity,
+  quantity: voteQuantity,
 }),
       });
 
