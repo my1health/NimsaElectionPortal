@@ -72,6 +72,8 @@ export default function AdminPage() {
 
   const [statsLoading, setStatsLoading] =
     useState(true);
+  const [showLeaderboard, setShowLeaderboard] =
+  useState(false);
 
   const [adminResults, setAdminResults] =
     useState<AdminResultCategory[]>([]);
