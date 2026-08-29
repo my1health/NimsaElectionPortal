@@ -109,7 +109,10 @@ const [statsLoading, setStatsLoading] =
 
     setAuthorized(true);
 
-    await loadData();
+    await Promise.all([
+  loadData(),
+  loadStats(),
+]);
 
     setLoading(false);
   }
