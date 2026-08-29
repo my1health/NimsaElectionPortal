@@ -51,7 +51,6 @@ const totalAmount =
 
       setCategories(data.categories || []);
       setNominees(data.nominees || []);
-      setResults(data.results || []);
     } catch {
       setMessage("Unable to load voting data.");
     }
