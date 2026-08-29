@@ -556,6 +556,156 @@ const [statsLoading, setStatsLoading] =
         <p className="muted">
           Add and manage Category B nominees.
         </p>
+        {/* =========================
+    DASHBOARD STATISTICS
+========================= */}
+
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 15,
+    marginTop: 30,
+    marginBottom: 30,
+  }}
+>
+
+  {/* CATEGORIES */}
+
+  <div className="card">
+    <p className="muted">
+      CATEGORIES
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : stats?.categories ?? 0}
+    </h2>
+
+    <p className="muted">
+      Award categories
+    </p>
+  </div>
+
+
+  {/* NOMINEES */}
+
+  <div className="card">
+    <p className="muted">
+      NOMINEES
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : stats?.nominees ?? 0}
+    </h2>
+
+    <p className="muted">
+      Total nominees
+    </p>
+  </div>
+
+
+  {/* ACTIVE NOMINEES */}
+
+  <div className="card">
+    <p className="muted">
+      ACTIVE
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : stats?.activeNominees ?? 0}
+    </h2>
+
+    <p className="muted">
+      Visible nominees
+    </p>
+  </div>
+
+
+  {/* TOTAL VOTES */}
+
+  <div className="card">
+    <p className="muted">
+      TOTAL VOTES
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : stats?.votes ?? 0}
+    </h2>
+
+    <p className="muted">
+      Verified votes
+    </p>
+  </div>
+
+
+  {/* SUCCESSFUL PAYMENTS */}
+
+  <div className="card">
+    <p className="muted">
+      PAID
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : stats?.successfulPayments ?? 0}
+    </h2>
+
+    <p className="muted">
+      Successful payments
+    </p>
+  </div>
+
+
+  {/* PENDING PAYMENTS */}
+
+  <div className="card">
+    <p className="muted">
+      PENDING
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : stats?.pendingPayments ?? 0}
+    </h2>
+
+    <p className="muted">
+      Pending payments
+    </p>
+  </div>
+
+
+  {/* TOTAL REVENUE */}
+
+  <div className="card">
+    <p className="muted">
+      TOTAL COLLECTED
+    </p>
+
+    <h2 style={{ margin: 0 }}>
+      {statsLoading
+        ? "..."
+        : `₦${(
+            stats?.totalAmountNaira ?? 0
+          ).toLocaleString()}`}
+    </h2>
+
+    <p className="muted">
+      Successful payments
+    </p>
+  </div>
+
+</div>
 
 
         {message && (
