@@ -184,15 +184,14 @@ export async function POST(request: Request) {
         });
 
     if (paymentError) {
-  console.error(
-    "Payment database error:",
-    paymentError
-  );
+  console.error("Payment database error:", paymentError);
 
   return NextResponse.json(
     {
-      error: "Payment database error.",
-      details: paymentError
+      error: `Payment database error: ${paymentError.message}`,
+      code: paymentError.code,
+      details: paymentError.details,
+      hint: paymentError.hint,
     },
     { status: 500 }
   );
