@@ -49,6 +49,11 @@ export default function AdminPage() {
 
   const [nominees, setNominees] =
     useState<Nominee[]>([]);
+  const [stats, setStats] =
+  useState<AdminStats | null>(null);
+
+const [statsLoading, setStatsLoading] =
+  useState(true);
 
   const [name, setName] =
     useState("");
