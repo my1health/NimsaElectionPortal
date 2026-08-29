@@ -661,28 +661,42 @@ const totalAmount =
 
             <input
   className="email-input"
-  type="number"
-  min="1"
-  max="1000"
+  type="text"
+  inputMode="numeric"
+  pattern="[0-9]*"
   value={quantity}
   onChange={(e) => {
     const value = e.target.value;
 
-    // Allow the user to temporarily clear the input
+    // Allow the field to be temporarily empty
     if (value === "") {
-      setQuantity(0);
+      setQuantity("");
       return;
     }
 
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
+    // Allow whole numbers only
+    if (!/^\d+$/.test(value)) {
       return;
     }
 
-    setQuantity(
-      Math.min(1000, Math.max(0, number))
-    );
+    // Remove leading zeros
+    const cleaned = value.replace(/^0+/, "");
+
+    // Temporarily allow 0 while editing
+    if (cleaned === "") {
+      setQuantity("0");
+      return;
+    }
+
+    const number = Number(cleaned);
+
+    // Maximum of 1000 votes
+    if (number > 1000) {
+      setQuantity("1000");
+      return;
+    }
+
+    setQuantity(cleaned);
   }}
 />
 
