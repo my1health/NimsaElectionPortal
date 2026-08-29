@@ -37,7 +37,13 @@ export default function Home() {
 
   const VOTE_PRICE = 100;
 
-  const totalAmount = quantity * VOTE_PRICE;
+  const quantityNumber = Number(quantity);
+
+const totalAmount =
+  Number.isInteger(quantityNumber) &&
+  quantityNumber >= 1
+    ? quantityNumber * VOTE_PRICE
+    : 0;
 
   async function load() {
     try {
