@@ -66,7 +66,7 @@ const totalAmount =
   function openVote(nominee: Nominee) {
     setSelected(nominee);
     setEmail("");
-    setQuantity(1);
+    setQuantity("1");
     setMessage("");
   }
 
