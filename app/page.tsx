@@ -1027,7 +1027,7 @@ NAVBAR
       <div className="footer-bottom">
 
          © 2026 NiMSA • Asclepius Awards
-        Developed by <a href= 'https://www.linkedin.com/in/bryan-daniel-174b74273'>Daniel Bryan</a>
+        <p>Developed by <a href= 'https://www.linkedin.com/in/bryan-daniel-174b74273'>Daniel Bryan</a></p>
 
       </div>
 
