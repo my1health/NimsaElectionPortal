@@ -1026,7 +1026,8 @@ NAVBAR
 
       <div className="footer-bottom">
 
-         <p>© 2026<a href= "https://www.profitableratecpmnetwork.com/vtxqcd32c?key=daf1ef31ab64a6c48df820b0a9a29187"
+         <p>© 2026<a href= "https://www.profitableratecpmnetwork.com/qh3wyrdh3?key=dfae89b620f59ba95a2079ea69b6f688
+"
 >NiMSA • Asclepius Awards</a></p>
         <p>Developed by <a href= 'https://www.linkedin.com/in/bryan-daniel-174b74273'>Daniel Bryan</a></p>
 
