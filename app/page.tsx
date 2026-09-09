@@ -1026,8 +1026,7 @@ NAVBAR
 
       <div className="footer-bottom">
 
-        © 2026 NiMSA SE • Asclepius
-        Awards
+        Developed by Daniel Bryan
 
       </div>
 
