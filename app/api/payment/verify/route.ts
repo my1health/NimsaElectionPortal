@@ -1,23 +1,17 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  recordPaidTransaction,
+  verifyPaystackTransaction,
+} from "@/lib/paystack";
 
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error(
-      "Missing Supabase server environment variables."
-    );
-  }
-
-  return createClient(url, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-}
+// Paystack statuses that can still become "success" later.
+const IN_PROGRESS_STATUSES = [
+  "ongoing",
+  "pending",
+  "processing",
+  "queued",
+];
 
 export async function POST(req: Request) {
   try {
@@ -36,10 +30,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const db = getAdminClient();
+    const db = supabaseAdmin();
 
     // =========================================
-    // FIND PAYMENT
+    // PREVENT DOUBLE PROCESSING
     // =========================================
 
     const {
@@ -47,9 +41,7 @@ export async function POST(req: Request) {
       error: paymentError,
     } = await db
       .from("payments")
-      .select(
-        "id, reference, email, nominee_id, amount_kobo, vote_count, status, paid_at"
-      )
+      .select("vote_count, status")
       .eq("reference", reference)
       .maybeSingle();
 
@@ -69,20 +61,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!payment) {
-      return NextResponse.json(
-        {
-          error: "Payment record not found.",
-        },
-        { status: 404 }
-      );
-    }
-
-    // =========================================
-    // PREVENT DOUBLE PROCESSING
-    // =========================================
-
-    if (payment.status === "success") {
+    if (payment?.status === "success") {
       return NextResponse.json({
         success: true,
         alreadyProcessed: true,
@@ -93,364 +72,87 @@ export async function POST(req: Request) {
     }
 
     // =========================================
-    // PAYSTACK SECRET KEY
-    // =========================================
-
-    const secretKey =
-      process.env.PAYSTACK_SECRET_KEY;
-
-    if (!secretKey) {
-      return NextResponse.json(
-        {
-          error:
-            "Paystack secret key is not configured.",
-        },
-        { status: 500 }
-      );
-    }
-
-    // =========================================
     // VERIFY WITH PAYSTACK
     // =========================================
 
-    const response = await fetch(
-      `https://api.paystack.co/transaction/verify/${encodeURIComponent(
-        reference
-      )}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${secretKey}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    let transaction;
 
-    const paystackData =
-      await response.json();
-
-    console.log(
-      "PAYSTACK VERIFICATION:",
-      paystackData
-    );
-
-    if (
-      !response.ok ||
-      !paystackData.status
-    ) {
+    try {
+      transaction =
+        await verifyPaystackTransaction(reference);
+    } catch (error: any) {
       return NextResponse.json(
         {
           error:
-            paystackData.message ||
+            error?.message ||
             "Unable to verify payment.",
         },
         { status: 400 }
       );
     }
 
-    const transaction =
-      paystackData.data;
+    console.log(
+      "PAYSTACK VERIFICATION:",
+      transaction
+    );
 
-    // =========================================
-    // PAYMENT MUST BE SUCCESSFUL
-    // =========================================
+    const status = String(
+      transaction.status || ""
+    ).toLowerCase();
 
-    if (
-      transaction.status !== "success"
-    ) {
+    if (IN_PROGRESS_STATUSES.includes(status)) {
+      return NextResponse.json(
+        {
+          pending: true,
+          status,
+          message:
+            "Paystack is still confirming your payment. Your votes will be added automatically once it completes, so you can safely close this page.",
+        },
+        { status: 202 }
+      );
+    }
+
+    if (status !== "success") {
+      // The webhook may already have recorded this payment,
+      // so never overwrite a successful status.
       await db
         .from("payments")
         .update({
-          status:
-            transaction.status ||
-            "failed",
+          status: status || "failed",
         })
-        .eq(
-          "reference",
-          reference
-        );
+        .eq("reference", reference)
+        .neq("status", "success");
 
       return NextResponse.json(
         {
           error:
             "Payment was not successful.",
-          status:
-            transaction.status,
+          status,
         },
         { status: 400 }
       );
     }
 
     // =========================================
-    // VERIFY AMOUNT
+    // RECORD VOTES
     // =========================================
 
-    const expectedAmount =
-      Number(payment.amount_kobo);
-
-    const paidAmount =
-      Number(transaction.amount);
-
-    if (
-      !Number.isInteger(expectedAmount) ||
-      expectedAmount < 100
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid payment amount in database.",
-        },
-        { status: 500 }
-      );
-    }
-
-    if (
-      paidAmount !== expectedAmount
-    ) {
-      console.error(
-        "AMOUNT MISMATCH:",
-        {
-          expectedAmount,
-          paidAmount,
-          reference,
-        }
-      );
-
-      await db
-        .from("payments")
-        .update({
-          status:
-            "amount_mismatch",
-        })
-        .eq(
-          "reference",
-          reference
-        );
-
-      return NextResponse.json(
-        {
-          error:
-            "Payment amount does not match the expected amount.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // =========================================
-    // VALIDATE VOTE COUNT
-    // =========================================
-
-    const votesToAdd =
-      Number(payment.vote_count);
-
-    if (
-      !Number.isInteger(votesToAdd) ||
-      votesToAdd < 1 ||
-      votesToAdd > 1000
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid vote quantity.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // =========================================
-    // VERIFY NOMINEE
-    // =========================================
-
-    const {
-      data: nominee,
-      error: nomineeError,
-    } = await db
-      .from("nominees")
-      .select(
-        "id, name, category_id, is_active"
-      )
-      .eq(
-        "id",
-        payment.nominee_id
-      )
-      .maybeSingle();
-
-    if (nomineeError) {
-      console.error(
-        "NOMINEE LOOKUP ERROR:",
-        nomineeError
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Unable to verify nominee.",
-          details:
-            nomineeError.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    if (!nominee) {
-      return NextResponse.json(
-        {
-          error:
-            "Nominee associated with this payment was not found.",
-        },
-        { status: 404 }
-      );
-    }
-
-    if (!nominee.is_active) {
-      return NextResponse.json(
-        {
-          error:
-            "This nominee is no longer available.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // =========================================
-    // CHECK WHETHER VOTES ALREADY EXIST
-    // =========================================
-
-    const {
-      data: existingVotes,
-      error: existingVotesError,
-    } = await db
-      .from("votes")
-      .select("id")
-      .eq(
-        "payment_reference",
-        reference
-      )
-      .limit(1);
-
-    if (existingVotesError) {
-      console.error(
-        "EXISTING VOTE CHECK ERROR:",
-        existingVotesError
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Unable to check existing votes.",
-          details:
-            existingVotesError.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    if (
-      existingVotes &&
-      existingVotes.length > 0
-    ) {
-      await db
-        .from("payments")
-        .update({
-          status: "success",
-          paid_at:
-            payment.paid_at ||
-            new Date().toISOString(),
-        })
-        .eq(
-          "reference",
-          reference
-        );
-
-      return NextResponse.json({
-        success: true,
-        alreadyProcessed: true,
-        votes: votesToAdd,
-        message:
-          "Votes for this payment have already been recorded.",
-      });
-    }
-
-    // =========================================
-    // CREATE VOTE ROWS
-    // =========================================
-
-    const voteRows = Array.from(
-      { length: votesToAdd },
-      () => ({
-        nominee_id:
-          payment.nominee_id,
-
-        category_id:
-          nominee.category_id,
-
-        email:
-          payment.email,
-
-        payment_reference:
-          reference,
-      })
+    const result = await recordPaidTransaction(
+      db,
+      transaction
     );
 
-    const {
-      error: voteError,
-    } = await db
-      .from("votes")
-      .insert(voteRows);
-
-    if (voteError) {
-      console.error(
-        "VOTE DATABASE ERROR:",
-        voteError
-      );
-
+    if (result.outcome !== "recorded") {
       return NextResponse.json(
         {
-          error:
-            `Vote database error: ${voteError.message}`,
-          code:
-            voteError.code,
-          details:
-            voteError.details,
-          hint:
-            voteError.hint,
+          error: `${result.message} Please contact the organisers with your payment reference.`,
         },
-        { status: 500 }
-      );
-    }
-
-    // =========================================
-    // MARK PAYMENT SUCCESSFUL
-    // =========================================
-
-    const {
-      error: updateError,
-    } = await db
-      .from("payments")
-      .update({
-        status: "success",
-        paid_at:
-          new Date().toISOString(),
-      })
-      .eq(
-        "reference",
-        reference
-      );
-
-    if (updateError) {
-      console.error(
-        "PAYMENT UPDATE ERROR:",
-        updateError
-      );
-
-      return NextResponse.json(
         {
-          error:
-            "Votes were recorded, but payment status could not be updated. Contact the administrator.",
-          details:
-            updateError.message,
-        },
-        { status: 500 }
+          status:
+            result.outcome === "amount_mismatch"
+              ? 400
+              : 422,
+        }
       );
     }
 
@@ -461,18 +163,21 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
 
-      votes: votesToAdd,
+      alreadyProcessed:
+        result.votesAdded === 0,
 
-      nominee: nominee.name,
+      votes: result.voteCount,
 
       reference,
 
       message:
-        `${votesToAdd} vote${
-          votesToAdd === 1
-            ? ""
-            : "s"
-        } added successfully.`,
+        result.votesAdded === 0
+          ? "Payment has already been processed."
+          : `${result.votesAdded} vote${
+              result.votesAdded === 1
+                ? ""
+                : "s"
+            } added successfully.`,
     });
 
   } catch (error: any) {

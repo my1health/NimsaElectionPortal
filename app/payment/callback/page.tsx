@@ -13,6 +13,10 @@ function PaymentCallbackContent() {
   const reference =
     searchParams.get("reference");
 
+  const [heading, setHeading] = useState(
+    "Verifying Payment"
+  );
+
   const [status, setStatus] = useState(
     "Verifying your payment..."
   );
@@ -53,6 +57,14 @@ function PaymentCallbackContent() {
               "Payment verification failed."
           );
         }
+
+        if (data.pending) {
+          setHeading("Payment Processing");
+          setStatus(data.message);
+          return;
+        }
+
+        setHeading("Payment Successful");
 
         setStatus(
           data.message ||
@@ -118,7 +130,7 @@ function PaymentCallbackContent() {
         {!error ? (
           <>
             <h1>
-              Payment Successful
+              {heading}
             </h1>
 
             <p

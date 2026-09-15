@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  amountMatches,
+  paidAmountKobo,
+  transactionMetadata,
+  type PaystackTransaction,
+} from "@/lib/paystack";
 
 export const dynamic = "force-dynamic";
 
@@ -9,18 +15,6 @@ const supabase = createClient(
 );
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
-
-type PaystackTransaction = {
-  reference: string;
-  status: string;
-  amount: number;
-  paid_at?: string | null;
-  transaction_date?: string | null;
-  customer?: {
-    email?: string | null;
-  };
-  metadata?: any;
-};
 
 type PaymentRow = {
   id: string;
@@ -37,11 +31,7 @@ type PaymentRow = {
 
 type VoteRow = {
   id: string;
-  nominee_id?: string | null;
-  category_id?: string | null;
-  email?: string | null;
   payment_reference?: string | null;
-  created_at?: string | null;
 };
 
 function metadataValue(metadata: any, keys: string[]) {
@@ -78,6 +68,8 @@ function toStringValue(value: any): string | null {
   return String(value);
 }
 
+// Pages are ordered by id: without an ORDER BY, Postgres may return
+// rows in a different order per request and skip or repeat some.
 async function fetchAllPayments(): Promise<PaymentRow[]> {
   const all: PaymentRow[] = [];
   const pageSize = 1000;
@@ -86,6 +78,7 @@ async function fetchAllPayments(): Promise<PaymentRow[]> {
     const { data, error } = await supabase
       .from("payments")
       .select("*")
+      .order("id")
       .range(from, from + pageSize - 1);
 
     if (error) {
@@ -109,7 +102,8 @@ async function fetchAllVotes(): Promise<VoteRow[]> {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from("votes")
-      .select("*")
+      .select("id, payment_reference")
+      .order("id")
       .range(from, from + pageSize - 1);
 
     if (error) {
@@ -124,6 +118,20 @@ async function fetchAllVotes(): Promise<VoteRow[]> {
   }
 
   return all;
+}
+
+async function fetchNomineeNames() {
+  const { data, error } = await supabase
+    .from("nominees")
+    .select("id, name");
+
+  if (error) {
+    throw new Error(`Could not load nominees: ${error.message}`);
+  }
+
+  return new Map<string, string>(
+    (data || []).map((nominee) => [nominee.id, nominee.name])
+  );
 }
 
 async function fetchSuccessfulPaystackTransactions() {
@@ -199,10 +207,12 @@ export async function GET() {
       paystackTransactions,
       payments,
       votes,
+      nomineeNames,
     ] = await Promise.all([
       fetchSuccessfulPaystackTransactions(),
       fetchAllPayments(),
       fetchAllVotes(),
+      fetchNomineeNames(),
     ]);
 
     // ----------------------------------------------------------
@@ -279,9 +289,9 @@ export async function GET() {
 
       successfulPaystackReferences.add(reference);
 
-      const paystackAmountKobo = Number(
-        transaction.amount || 0
-      );
+      // Excludes fees passed on to the voter.
+      const paystackAmountKobo =
+        paidAmountKobo(transaction);
 
       summary.totalPaystackAmountKobo +=
         paystackAmountKobo;
@@ -289,7 +299,7 @@ export async function GET() {
       const payment =
         paymentByReference.get(reference);
 
-      const metadata = transaction.metadata || {};
+      const metadata = transactionMetadata(transaction);
 
       const nomineeId = toStringValue(
         metadataValue(metadata, [
@@ -407,8 +417,10 @@ export async function GET() {
       );
 
       if (
-        supabaseAmountKobo !==
-        paystackAmountKobo
+        !amountMatches(
+          transaction,
+          supabaseAmountKobo
+        )
       ) {
         summary.amountMismatch++;
 
@@ -436,7 +448,7 @@ export async function GET() {
             email || payment.email || null,
 
           message:
-            "Amount differs between Paystack and Supabase. Status can still be synchronized to SUCCESS, but votes will not be automatically changed because the amount requires review.",
+            "Amount differs between Paystack and Supabase. Votes will not be automatically changed because the amount requires review.",
         });
 
         continue;
@@ -444,12 +456,18 @@ export async function GET() {
 
       // --------------------------------------------------------
       // METADATA CHECK
+      //
+      // The payment row records what the voter bought, so it
+      // takes priority. Paystack metadata is only a fallback.
       // --------------------------------------------------------
 
+      const expectedVoteCount =
+        toNumber(payment.vote_count) ??
+        paystackVoteCount;
+
       if (
-        !nomineeId ||
-        !categoryId ||
-        paystackVoteCount === null
+        !(payment.nominee_id || nomineeId) ||
+        expectedVoteCount === null
       ) {
         summary.missingMetadata++;
 
@@ -477,7 +495,7 @@ export async function GET() {
             email || payment.email || null,
 
           message:
-            "Required Paystack voting metadata is missing. No votes will be changed automatically.",
+            "Neither the payment record nor Paystack metadata says which nominee or how many votes. No votes will be changed automatically.",
         });
 
         continue;
@@ -491,7 +509,7 @@ export async function GET() {
         votesByReference.get(reference) || 0;
 
       // Add-only reconciliation.
-      if (actualVoteCount < paystackVoteCount) {
+      if (actualVoteCount < expectedVoteCount) {
         summary.missingVotes++;
 
         items.push({
@@ -501,11 +519,11 @@ export async function GET() {
           paystackAmountKobo,
           supabaseAmountKobo,
 
-          paystackVoteCount,
+          paystackVoteCount: expectedVoteCount,
           supabaseVoteCount: actualVoteCount,
 
           nomineeId:
-            nomineeId || payment.nominee_id || null,
+            payment.nominee_id || nomineeId || null,
 
           nomineeName: null,
 
@@ -516,7 +534,7 @@ export async function GET() {
             email || payment.email || null,
 
           message:
-            `Paystack indicates ${paystackVoteCount} vote(s), while Supabase has ${actualVoteCount}. Only the missing ${paystackVoteCount - actualVoteCount} vote(s) will be added.`,
+            `This payment bought ${expectedVoteCount} vote(s), while Supabase has ${actualVoteCount}. Only the missing ${expectedVoteCount - actualVoteCount} vote(s) will be added.`,
         });
 
         continue;
@@ -527,7 +545,7 @@ export async function GET() {
       // NEVER DELETE THEM
       // --------------------------------------------------------
 
-      if (actualVoteCount > paystackVoteCount) {
+      if (actualVoteCount > expectedVoteCount) {
         summary.extraVotes++;
 
         items.push({
@@ -537,11 +555,11 @@ export async function GET() {
           paystackAmountKobo,
           supabaseAmountKobo,
 
-          paystackVoteCount,
+          paystackVoteCount: expectedVoteCount,
           supabaseVoteCount: actualVoteCount,
 
           nomineeId:
-            nomineeId || payment.nominee_id || null,
+            payment.nominee_id || nomineeId || null,
 
           nomineeName: null,
 
@@ -552,7 +570,7 @@ export async function GET() {
             email || payment.email || null,
 
           message:
-            "Supabase has more votes than Paystack metadata. EXTRA VOTES ARE LEFT COMPLETELY UNTOUCHED. No votes will be deleted.",
+            "Supabase has more votes than this payment bought. EXTRA VOTES ARE LEFT COMPLETELY UNTOUCHED. No votes will be deleted.",
         });
 
         continue;
@@ -571,11 +589,11 @@ export async function GET() {
         paystackAmountKobo,
         supabaseAmountKobo,
 
-        paystackVoteCount,
+        paystackVoteCount: expectedVoteCount,
         supabaseVoteCount: actualVoteCount,
 
         nomineeId:
-          nomineeId || payment.nominee_id || null,
+          payment.nominee_id || nomineeId || null,
 
         nomineeName: null,
 
@@ -630,6 +648,11 @@ export async function GET() {
             "No successful Paystack transaction was found for this reference. Supabase payment and votes are LEFT COMPLETELY UNTOUCHED.",
         });
       }
+    }
+
+    for (const item of items) {
+      item.nomineeName =
+        nomineeNames.get(item.nomineeId) || null;
     }
 
     // ----------------------------------------------------------

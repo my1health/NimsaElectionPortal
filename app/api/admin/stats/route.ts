@@ -126,24 +126,40 @@ export async function GET() {
     // -----------------------------
     // TOTAL MONEY COLLECTED
     // -----------------------------
-    const {
-      data: successfulPayments,
-      error: amountError,
-    } = await db
-      .from("payments")
-      .select("amount_kobo")
-      .eq("status", "success");
+    // Paginated: a single select stops at
+    // Supabase's 1000-row API limit.
+    let totalAmountKobo = 0;
 
-    if (amountError) {
-      throw amountError;
+    const pageSize = 1000;
+
+    for (let from = 0; ; from += pageSize) {
+      const {
+        data: successfulPayments,
+        error: amountError,
+      } = await db
+        .from("payments")
+        .select("amount_kobo")
+        .eq("status", "success")
+        .order("id")
+        .range(from, from + pageSize - 1);
+
+      if (amountError) {
+        throw amountError;
+      }
+
+      for (const payment of successfulPayments || []) {
+        totalAmountKobo += Number(
+          payment.amount_kobo || 0
+        );
+      }
+
+      if (
+        !successfulPayments ||
+        successfulPayments.length < pageSize
+      ) {
+        break;
+      }
     }
-
-    const totalAmountKobo =
-      (successfulPayments || []).reduce(
-        (total, payment) =>
-          total + Number(payment.amount_kobo || 0),
-        0
-      );
 
     const totalAmountNaira =
       totalAmountKobo / 100;

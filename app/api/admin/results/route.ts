@@ -33,27 +33,28 @@ export async function GET() {
       throw nomineeError;
     }
 
-    // Get all verified votes
-    const {
-      data: votes,
-      error: voteError,
-    } = await db
-      .from("votes")
-      .select(
-        "id, nominee_id, category_id, email, payment_reference"
-      );
-
-    if (voteError) {
-      throw voteError;
-    }
-
-    // Count votes
+    // Count each nominee's votes in the database.
+    // Loading the vote rows instead stops at Supabase's
+    // 1000-row API limit and silently undercounts.
     const voteCounts: Record<string, number> = {};
 
-    for (const vote of votes || []) {
-      voteCounts[vote.nominee_id] =
-        (voteCounts[vote.nominee_id] || 0) + 1;
-    }
+    await Promise.all(
+      (nominees || []).map(async (nominee) => {
+        const { count, error } = await db
+          .from("votes")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("nominee_id", nominee.id);
+
+        if (error) {
+          throw error;
+        }
+
+        voteCounts[nominee.id] = count || 0;
+      })
+    );
 
     // Build results
     const results = (nominees || []).map(
@@ -102,7 +103,11 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       categories: categoryResults,
-      totalVotes: votes?.length || 0,
+      totalVotes: results.reduce(
+        (total, nominee) =>
+          total + nominee.votes,
+        0
+      ),
     });
 
   } catch (error: any) {

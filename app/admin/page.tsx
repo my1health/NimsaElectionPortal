@@ -453,22 +453,20 @@ export default function AdminPage() {
         );
       }
 
-      const corrected =
-        data.corrected?.length || 0;
-
-      const skipped =
-        data.skipped?.length || 0;
-
-      setReconcileMessage(
-        `Correction completed. ${corrected} transaction(s) corrected and ${skipped} transaction(s) skipped for review.`
-      );
-
       await Promise.all([
         loadStats(),
         loadResults(),
       ]);
 
+      // Re-check first, because runReconciliation
+      // replaces the message.
       await runReconciliation();
+
+      const result = data.result || {};
+
+      setReconcileMessage(
+        `Correction completed. ${result.votesAdded || 0} vote(s) added across ${result.recorded || 0} transaction(s); ${result.alreadyCorrect || 0} already correct, ${result.skipped || 0} need manual review, ${result.failed || 0} failed.`
+      );
     } catch (error: any) {
       console.error(
         "Apply reconciliation error:",
@@ -723,8 +721,12 @@ export default function AdminPage() {
         );
 
     if (error) {
+      // 23503: the nominee has votes, which the
+      // database no longer lets you delete.
       setMessage(
-        error.message
+        error.code === "23503"
+          ? "This nominee has recorded votes and cannot be deleted. Use Hide instead."
+          : error.message
       );
 
       return;
